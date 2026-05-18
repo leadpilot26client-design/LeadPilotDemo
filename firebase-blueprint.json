@@ -1,0 +1,100 @@
+{
+  "entities": {
+    "Client": {
+      "title": "Client",
+      "description": "A client account with authorized users and limits",
+      "type": "object",
+      "properties": {
+        "clientId": { "type": "string" },
+        "maxUsers": { "type": "integer" },
+        "users": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "ownerEmail": { "type": "string" }
+      },
+      "required": ["clientId", "maxUsers", "users"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "A CRM lead",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "property": { "type": "string" },
+        "budget": { "type": "string" },
+        "location": { "type": "string" },
+        "source": { "type": "string" },
+        "status": { "type": "string" },
+        "followUpDate": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "clientId": { "type": "string" }
+      },
+      "required": ["id", "firstName", "phone", "clientId"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "A scheduled event linked to a lead",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "leadId": { "type": "string" },
+        "leadName": { "type": "string" },
+        "type": { "type": "string", "enum": ["Call", "Site Visit", "Meeting", "Follow-up"] },
+        "date": { "type": "string", "format": "date-time" },
+        "time": { "type": "string" },
+        "notes": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "clientId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "leadId", "type", "date", "clientId"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "An actionable task possibly linked to a lead",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "leadId": { "type": "string" },
+        "leadName": { "type": "string" },
+        "title": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "time": { "type": "string" },
+        "assignedTo": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pending", "Completed"] },
+        "clientId": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "title", "date", "clientId", "status"]
+    }
+  },
+  "firestore": {
+    "/clients/{clientId}": {
+      "schema": "Client",
+      "description": "Collection of client accounts"
+    },
+    "/leads/{leadId}": {
+      "schema": "Lead",
+      "description": "Collection of all leads"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "Appointment",
+      "description": "Collection of all scheduled appointments"
+    },
+    "/tasks/{taskId}": {
+      "schema": "Task",
+      "description": "Collection of all agent tasks"
+    }
+  }
+}

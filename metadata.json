@@ -1,0 +1,14 @@
+{
+  "name": "LeadPilot CRM",
+  "description": "Mobile-first real estate lead management CRM with lead capture and agent assignment.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "CRM",
+    "Lead Management",
+    "Real Estate",
+    "Mobile-First"
+  ]
+}

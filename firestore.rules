@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. GLOBAL HELPERS
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function getUserEmail() {
+      return request.auth.token.email;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    // Explicitly trust the leadpilot owner email
+    function isLeadPilot() {
+      return isSignedIn() && getUserEmail().lower() == 'leadpilot25@gmail.com';
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Test connection path
+    match /test/{docId} {
+      allow read: if isSignedIn();
+    }
+
+    // 2. CLIENTS COLLECTION
+    match /clients/{clientId} {
+      // leadpilot25@gmail.com can manage all clients
+      allow read, write: if isLeadPilot() || (isSignedIn() && getUserEmail().lower() == 'buddyproject2020@gmail.com');
+
+      // Users can read their own client config if they are in the users list
+      allow get: if isSignedIn() && getUserEmail() in resource.data.users;
+      
+      // Allow creation for anyone signed in to set up their own client
+      // This enables the "Initialize First Client" button
+      allow create: if isSignedIn() 
+        && isValidId(clientId)
+        && request.resource.data.ownerEmail == getUserEmail();
+      
+      // Owners can update their client data (e.g. adding users)
+      allow update: if isSignedIn() 
+        && resource.data.ownerEmail == getUserEmail();
+      
+      // Allow listing clients we belong to
+      allow list: if isSignedIn() && resource.data.users.size() > 0 && getUserEmail() in resource.data.users;
+    }
+
+    // 3. LEADS COLLECTION
+    match /leads/{leadId} {
+      // leadpilot25@gmail.com can manage all leads
+      allow read, write: if isLeadPilot() || (isSignedIn() && getUserEmail().lower() == 'buddyproject2020@gmail.com');
+
+      function userBelongsToClient(cId) {
+        return getUserEmail() in get(/databases/$(database)/documents/clients/$(cId)).data.users;
+      }
+
+      allow get: if isSignedIn() && userBelongsToClient(resource.data.clientId);
+      
+      allow create: if (isSignedIn() && userBelongsToClient(request.resource.data.clientId))
+        || (request.resource.data.source == 'Public Form'); // Allow public form submissions
+
+      allow update: if isSignedIn()
+        && userBelongsToClient(resource.data.clientId);
+        
+      allow delete: if isSignedIn() && userBelongsToClient(resource.data.clientId);
+      
+      allow list: if isSignedIn() && (isLeadPilot() || userBelongsToClient(resource.data.clientId));
+    }
+
+    // 4. APPOINTMENTS COLLECTION
+    match /appointments/{appointmentId} {
+      allow read, write: if isLeadPilot() || (isSignedIn() && getUserEmail().lower() == 'buddyproject2020@gmail.com');
+      
+      allow get, create, update, delete, list: if isSignedIn() 
+        && userBelongsToClient(request.resource.data.clientId || resource.data.clientId);
+    }
+
+    // 5. TASKS COLLECTION
+    match /tasks/{taskId} {
+      allow read, write: if isLeadPilot() || (isSignedIn() && getUserEmail().lower() == 'buddyproject2020@gmail.com');
+      
+      allow get, create, update, delete, list: if isSignedIn() 
+        && userBelongsToClient(request.resource.data.clientId || resource.data.clientId);
+    }
+  }
+}
