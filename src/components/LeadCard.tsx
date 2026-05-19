@@ -26,11 +26,11 @@ import { STATUS_COLORS, USERS } from '../constants';
 interface LeadCardProps {
   key?: React.Key;
   lead: Lead;
-  onUpdateAfterCall: (lead: Lead) => void;
+  onUpdateAfterCall: (lead: Lead, initialType?: AppointmentType) => void;
   onMarkDone: (lead: Lead) => void;
   onDelete?: () => void;
   onReassign?: (lead: Lead, agentId?: string) => void;
-  onSchedule?: (lead: Lead) => void;
+  onSchedule?: (lead: Lead, type?: AppointmentType) => void;
   isAdmin?: boolean;
   isSelectable?: boolean;
   isSelected?: boolean;
@@ -291,27 +291,35 @@ export default function LeadCard({
 
       {/* Quick Interaction Links */}
       {!isDone && (
-        <div className="flex items-center gap-4 mb-4 px-1">
+        <div className="flex items-center gap-3 mb-4 px-2 py-2 bg-slate-50/50 rounded-xl border border-slate-100/50">
           <button 
-            onClick={(e) => { e.stopPropagation(); onSchedule?.(lead); }}
-            className="flex items-center gap-1 text-[9px] font-black uppercase text-blue-600 hover:text-blue-700 transition-colors"
+            onClick={(e) => { e.stopPropagation(); onUpdateAfterCall?.(lead, AppointmentType.SITE_VISIT); }}
+            className="flex-1 flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-blue-50 transition-all group"
           >
-            <MapPin size={10} strokeWidth={3} />
-            Site Visit
+            <div className="bg-blue-100 text-blue-600 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
+              <MapPin size={14} strokeWidth={2.5} />
+            </div>
+            <span className="text-[8px] font-black uppercase tracking-tighter text-blue-700">Site Visit</span>
           </button>
+          
           <button 
-            onClick={(e) => { e.stopPropagation(); onSchedule?.(lead); }}
-            className="flex items-center gap-1 text-[9px] font-black uppercase text-emerald-600 hover:text-emerald-700 transition-colors"
+            onClick={(e) => { e.stopPropagation(); onUpdateAfterCall?.(lead, AppointmentType.MEETING); }}
+            className="flex-1 flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-emerald-50 transition-all group"
           >
-            <Video size={10} strokeWidth={3} />
-            Meeting
+            <div className="bg-emerald-100 text-emerald-600 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
+              <Video size={14} strokeWidth={2.5} />
+            </div>
+            <span className="text-[8px] font-black uppercase tracking-tighter text-emerald-700">Meeting</span>
           </button>
+
           <button 
-            onClick={(e) => { e.stopPropagation(); onUpdateAfterCall?.(lead); }}
-            className="flex items-center gap-1 text-[9px] font-black uppercase text-orange-600 hover:text-orange-700 transition-colors"
+            onClick={(e) => { e.stopPropagation(); onUpdateAfterCall?.(lead, AppointmentType.FOLLOW_UP); }}
+            className="flex-1 flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-orange-50 transition-all group"
           >
-            <PhoneCall size={10} strokeWidth={3} />
-            Call Back
+            <div className="bg-orange-100 text-orange-600 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
+              <PhoneCall size={14} strokeWidth={2.5} />
+            </div>
+            <span className="text-[8px] font-black uppercase tracking-tighter text-orange-700">Callback</span>
           </button>
         </div>
       )}
