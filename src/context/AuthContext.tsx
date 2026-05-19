@@ -44,6 +44,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const email = firebaseUser.email.toLowerCase();
         setUser(firebaseUser);
         try {
+          // Debug info for the user
+          console.log("Firebase Auth Email:", email);
+          console.log("Firebase Config Project ID:", (auth.app.options as any).projectId);
+          
           // Check if user is in any client's users list - Faster parallel checks
           const clientsRef = collection(db, 'clients');
           const [usersSnapshot, ownerSnapshot] = await Promise.all([
