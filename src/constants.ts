@@ -1,6 +1,9 @@
 import { User } from './types';
 
-export const USERS: User[] = [];
+export const USERS: User[] = [
+  { id: 'admin1', username: 'LeadPilot Admin', email: 'leadpilot25@gmail.com', role: 'admin' },
+  { id: 'client1', username: 'LeadPilot Admin', email: 'leadpilot26.client@gmail.com', role: 'agent' }
+];
 
 export const COLORS = {
   primary: '#10B981', // Emerald
