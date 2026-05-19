@@ -88,4 +88,4 @@ export interface User {
   role: 'admin' | 'agent';
 }
 
-export type FilterTab = 'Dashboard' | 'All' | 'Today' | 'Overdue' | 'Upcoming' | 'Done' | 'Calendar' | 'Tasks' | 'Stats' | 'Settings';
+export type FilterTab = 'Dashboard' | 'All' | 'Today' | 'Overdue' | 'Upcoming' | 'Done' | 'Site Visits' | 'Calendar' | 'Tasks' | 'Stats' | 'Settings';
