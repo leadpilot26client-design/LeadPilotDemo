@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, FirebaseOptions } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDocFromServer } from 'firebase/firestore';
 
@@ -17,10 +17,9 @@ const app = initializeApp(firebaseConfig);
 
 // ✅ Services
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = getFirestore(app, import.meta.env.VITE_FIREBASE_DATABASE_ID || '(default)');
 export const googleProvider = new GoogleAuthProvider();
 
-// 🔹 Optional: Firestore error handling
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -53,22 +52,22 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     },
     operationType,
     path
-  };
-  console.error('Firestore Error:', JSON.stringify(errInfo, null, 2));
-  throw new Error(JSON.stringify(errInfo));
+  }
+  const stringified = JSON.stringify(errInfo, null, 2);
+  console.error('Firestore Error:', stringified);
+  throw new Error(stringified);
 }
 
-// 🔹 Test connection (optional)
+// Validation call to ensure connection
 async function testConnection() {
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch {
-    // ignore
+  } catch (error) {
+    // Silently handle - rules might block it but it checks if server is reachable
   }
 }
 
 testConnection();
 
-// ✅ Auth functions
 export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
 export const logout = () => signOut(auth);
