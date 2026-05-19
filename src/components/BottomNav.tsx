@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, CheckSquare, LayoutDashboard, AlertCircle, UserCircle, Plus, BarChart2, ListTodo } from 'lucide-react';
+import { Calendar, CheckSquare, LayoutDashboard, AlertCircle, UserCircle, Plus, BarChart2, ListTodo, MapPin } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { FilterTab } from '../types';
 
@@ -14,10 +14,9 @@ interface BottomNavProps {
 export default function BottomNav({ activeTab, onTabChange, onAddClick, todayCount, isAdmin }: BottomNavProps) {
   const navItems = [
     { label: 'Today', icon: Calendar, tab: 'Today' as FilterTab },
-    { label: 'Cal', icon: Calendar, tab: 'Calendar' as FilterTab },
+    { label: 'Visit', icon: MapPin, tab: 'Site Visits' as FilterTab },
     { label: 'Add', icon: Plus, tab: 'Add' as any },
     { label: 'Tasks', icon: ListTodo, tab: 'Tasks' as FilterTab },
-    { label: 'Stats', icon: BarChart2, tab: 'Stats' as FilterTab },
     { label: 'User', icon: UserCircle, tab: 'Settings' as FilterTab },
   ];
 
