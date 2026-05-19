@@ -16,8 +16,8 @@ interface StatsCardsProps {
 export default function StatsCards({ todayCount, overdueCount, totalLeads, upcomingCount, doneCount, activeTab, onCardClick }: StatsCardsProps) {
   const stats = [
     { label: 'Today', value: todayCount, icon: Calendar, color: 'text-emerald-500', bg: 'bg-emerald-50/70', border: 'border-emerald-100', dot: 'bg-emerald-400', tab: 'Today' as FilterTab },
+    { label: 'Site Visits', value: upcomingCount, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50/70', border: 'border-blue-100', dot: 'bg-blue-400', tab: 'Site Visits' as FilterTab },
     { label: 'Overdue', value: overdueCount, icon: AlertCircle, color: 'text-rose-500', bg: 'bg-rose-50/70', border: 'border-rose-100', dot: 'bg-rose-400', tab: 'Overdue' as FilterTab },
-    { label: 'Upcoming', value: upcomingCount, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-50/70', border: 'border-blue-100', dot: 'bg-blue-400', tab: 'Upcoming' as FilterTab },
     { label: 'Total', value: totalLeads, icon: LayoutDashboard, color: 'text-slate-600', bg: 'bg-white', border: 'border-slate-200', dot: 'bg-slate-500', tab: 'All' as FilterTab },
   ];
 
