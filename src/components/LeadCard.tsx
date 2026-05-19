@@ -289,6 +289,33 @@ export default function LeadCard({
         </div>
       )}
 
+      {/* Quick Interaction Links */}
+      {!isDone && (
+        <div className="flex items-center gap-4 mb-4 px-1">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onSchedule?.(lead); }}
+            className="flex items-center gap-1 text-[9px] font-black uppercase text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            <MapPin size={10} strokeWidth={3} />
+            Site Visit
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onSchedule?.(lead); }}
+            className="flex items-center gap-1 text-[9px] font-black uppercase text-emerald-600 hover:text-emerald-700 transition-colors"
+          >
+            <Video size={10} strokeWidth={3} />
+            Meeting
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onUpdateAfterCall?.(lead); }}
+            className="flex items-center gap-1 text-[9px] font-black uppercase text-orange-600 hover:text-orange-700 transition-colors"
+          >
+            <PhoneCall size={10} strokeWidth={3} />
+            Call Back
+          </button>
+        </div>
+      )}
+
       {/* Main Action Buttons */}
       {!isDone && (
         <div className="grid grid-cols-2 gap-3 mb-4">
