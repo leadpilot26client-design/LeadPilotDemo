@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { parseISO, isToday, isPast, isFuture, startOfDay, format } from 'date-fns';
 import { LogOut, Plus, Search, Building2, Users, Bell, AlertCircle, Share2, UserPlus, CheckSquare, Square, ShieldAlert, Loader2, X, LayoutDashboard, Home } from 'lucide-react';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc, getDocs, orderBy, serverTimestamp, limit } from 'firebase/firestore';
 
 import { Lead, LeadStatus, DoneReason, FilterTab, Appointment, Task, TaskStatus, AppointmentType } from './types';
 import { USERS } from './constants';
@@ -72,29 +72,46 @@ function AccessDenied({ email }: { email: string }) {
   // Auto-init for the platform user to make it easier
   const handleInitialize = async () => {
     setInitializing(true);
-    const clientId = 'client_lp_' + Math.random().toString(36).substr(2, 5);
-    const path = `clients/${clientId}`;
+    const emailLower = email.toLowerCase();
+    
     try {
-      // Get all emails from our local constants to authorized them in the DB
+      // Find if client already exists for this owner
+      const clientsRef = collection(db, 'clients');
+      const q = query(clientsRef, where('ownerEmail', '==', emailLower), limit(1));
+      const querySnapshot = await getDocs(q);
+      
       const authorizedEmails = Array.from(new Set([
-        email.toLowerCase(),
+        emailLower,
         ...USERS.map(u => u.email.toLowerCase())
       ]));
 
-      await setDoc(doc(db, 'clients', clientId), {
-        clientId,
-        maxUsers: 10,
-        users: authorizedEmails,
-        ownerEmail: email,
-        name: 'LeadPilot Master',
-        defaultAgent: 'admin',
-        createdAt: new Date().toISOString()
-      });
-      console.log("Initialization successful for:", email, "with users:", authorizedEmails);
+      if (!querySnapshot.empty) {
+        // Update existing
+        const existingDoc = querySnapshot.docs[0];
+        await updateDoc(doc(db, 'clients', existingDoc.id), {
+          users: authorizedEmails,
+          updatedAt: new Date().toISOString()
+        });
+        console.log("Updated existing client for:", emailLower);
+      } else {
+        // Create new
+        const clientId = 'client_lp_' + Math.random().toString(36).substr(2, 5);
+        await setDoc(doc(db, 'clients', clientId), {
+          clientId,
+          maxUsers: 10,
+          users: authorizedEmails,
+          ownerEmail: emailLower,
+          name: 'LeadPilot Master',
+          defaultAgent: 'admin',
+          createdAt: new Date().toISOString()
+        });
+        console.log("Created new client for:", emailLower);
+      }
+      
       window.location.reload();
     } catch (e: any) {
       console.error("Initialization error:", e);
-      handleFirestoreError(e, OperationType.CREATE, path);
+      handleFirestoreError(e, OperationType.UPDATE, 'clients');
     } finally {
       setInitializing(false);
     }
