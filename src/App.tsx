@@ -5,7 +5,7 @@ import { LogOut, Plus, Search, Building2, Users, Bell, AlertCircle, Share2, User
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc, getDocs, orderBy, serverTimestamp, limit } from 'firebase/firestore';
 
-import { Lead, LeadStatus, DoneReason, FilterTab, Appointment, Task, TaskStatus, AppointmentType } from './types';
+import { Lead, LeadStatus, DoneReason, FilterTab, Appointment, Task, TaskStatus, AppointmentType, CallOutcome } from './types';
 import { USERS } from './constants';
 import LoginForm from './components/LoginForm';
 import PublicLeadForm from './components/PublicLeadForm';
@@ -67,51 +67,59 @@ const sendToGoogleSheets = async (lead: any) => {
 
 function AccessDenied({ email }: { email: string }) {
   const [initializing, setInitializing] = useState(false);
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
   const { error: authError } = useAuth();
 
-  // Auto-init for the platform user to make it easier
+  const MASTER_ADMIN = 'leadpilot25@gmail.com';
+
+  // Auto-init for authorized team members
   const handleInitialize = async () => {
     setInitializing(true);
     const emailLower = email.toLowerCase();
     
     try {
-      // Find if client already exists for this owner
+      // We use a fixed client ID for the Master Team to ensure everyone stays together
+      const MASTER_CLIENT_ID = 'client_lp_master_v1';
       const clientsRef = collection(db, 'clients');
-      const q = query(clientsRef, where('ownerEmail', '==', emailLower), limit(1));
-      const querySnapshot = await getDocs(q);
       
       const authorizedEmails = Array.from(new Set([
-        emailLower,
-        ...USERS.map(u => u.email.toLowerCase())
+        MASTER_ADMIN,
+        ...USERS.map(u => u.email.toLowerCase()),
+        emailLower
       ]));
 
-      if (!querySnapshot.empty) {
-        // Update existing
-        const existingDoc = querySnapshot.docs[0];
-        await updateDoc(doc(db, 'clients', existingDoc.id), {
-          users: authorizedEmails,
+      // Check if document exists first
+      const clientDoc = await getDoc(doc(db, 'clients', MASTER_CLIENT_ID));
+      
+      if (clientDoc.exists()) {
+        const existingData = clientDoc.data();
+        const currentUsers = existingData.users || [];
+        const mergedUsers = Array.from(new Set([...currentUsers, ...authorizedEmails]));
+        
+        await updateDoc(doc(db, 'clients', MASTER_CLIENT_ID), {
+          users: mergedUsers,
           updatedAt: new Date().toISOString()
         });
-        console.log("Updated existing client for:", emailLower);
+        console.log("Updated MASTER client users list");
       } else {
-        // Create new
-        const clientId = 'client_lp_' + Math.random().toString(36).substr(2, 5);
-        await setDoc(doc(db, 'clients', clientId), {
-          clientId,
-          maxUsers: 10,
+        // Create the master client
+        await setDoc(doc(db, 'clients', MASTER_CLIENT_ID), {
+          clientId: MASTER_CLIENT_ID,
+          maxUsers: 50,
           users: authorizedEmails,
-          ownerEmail: emailLower,
-          name: 'LeadPilot Master',
+          ownerEmail: MASTER_ADMIN,
+          name: 'LeadPilot Master Portal',
           defaultAgent: 'admin',
           createdAt: new Date().toISOString()
         });
-        console.log("Created new client for:", emailLower);
+        console.log("Created MASTER client portal");
       }
       
+      alert('Initialization successful! Restarting...');
       window.location.reload();
     } catch (e: any) {
       console.error("Initialization error:", e);
-      handleFirestoreError(e, OperationType.UPDATE, 'clients');
+      alert('Error: ' + (e.message || 'Check Firestore rules or internet connection.'));
     } finally {
       setInitializing(false);
     }
@@ -126,7 +134,7 @@ function AccessDenied({ email }: { email: string }) {
         <div className="space-y-2">
           <h1 className="text-2xl font-bold text-gray-900">Access Denied</h1>
           <p className="text-gray-500 text-sm">
-            The email <span className="font-bold text-gray-900">{email}</span> is not authorized to access this CRM.
+            Authenticated as: <span className="font-bold text-gray-900">{email}</span>
           </p>
         </div>
 
@@ -141,18 +149,17 @@ function AccessDenied({ email }: { email: string }) {
           </div>
         )}
         
-        {(email.toLowerCase() === 'leadpilot25@gmail.com' || USERS.some(u => u.email.toLowerCase() === email.toLowerCase())) && (
+        {USERS.some(u => u.email.toLowerCase() === email.toLowerCase()) ? (
           <div className="space-y-4">
              <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-left">
-               <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-2">Authorized Accounts</p>
-               <div className="space-y-1">
-                 {USERS.map(u => (
-                   <div key={u.email} className="flex items-center gap-2 text-[10px] text-emerald-600 font-bold">
-                     <Users size={10} />
-                     <span>{u.email}</span>
-                   </div>
-                 ))}
+               <div className="flex justify-between items-center mb-2">
+                 <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Authorized Team Member</p>
+                 <span className="bg-emerald-500 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">MATCH</span>
                </div>
+               <p className="text-[10px] text-emerald-600 font-bold leading-relaxed">
+                 You are recognized as an authorized team member in the system code. 
+                 If you cannot enter, the database needs to be initialized for your team.
+               </p>
              </div>
              
              <button 
@@ -160,18 +167,41 @@ function AccessDenied({ email }: { email: string }) {
               disabled={initializing}
               className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-bold text-sm shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 active:scale-95 transition-all"
             >
-              {initializing ? <Loader2 className="animate-spin" /> : 'Initialize My CRM Account'}
+              {initializing ? <Loader2 className="animate-spin" size={20} /> : 'Initialize / Sync Master Team Access'}
             </button>
-            <p className="text-[9px] text-gray-400 font-medium">Click above to set up the database for these users.</p>
+            <p className="text-[9px] text-gray-400 font-medium">This will grant database permissions to all team emails listed in constants.ts</p>
+          </div>
+        ) : (
+          <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-left">
+             <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Notice</p>
+             <p className="text-[10px] text-gray-400 font-bold leading-relaxed">
+               This account is not in the hardcoded USERS list. Contact your Master Admin (leadpilot25@gmail.com) to add you.
+             </p>
           </div>
         )}
 
-        <button 
-          onClick={() => logout()}
-          className="w-full py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold text-sm hover:bg-gray-200 transition-colors"
-        >
-          Logout & Try Another Email
-        </button>
+        <div className="pt-4 space-y-3">
+          <button 
+            onClick={() => logout()}
+            className="w-full py-3 bg-gray-100 text-gray-600 rounded-2xl font-bold text-xs hover:bg-gray-200 transition-colors"
+          >
+            Logout & Try Another Email
+          </button>
+          
+          <button 
+            onClick={() => setShowDiagnostic(!showDiagnostic)}
+            className="text-[10px] text-slate-400 font-bold uppercase tracking-widest hover:text-emerald-500"
+          >
+            {showDiagnostic ? 'Hide' : 'Show'} Database Config
+          </button>
+          
+          {showDiagnostic && (
+            <div className="p-3 bg-slate-900 rounded-xl text-left overflow-hidden">
+               <p className="text-[8px] font-mono text-emerald-400 mb-1 tracking-tighter">PROJECT: {import.meta.env.VITE_FIREBASE_PROJECT_ID || 'loading...'}</p>
+               <p className="text-[8px] font-mono text-emerald-400 tracking-tighter uppercase whitespace-nowrap overflow-hidden text-ellipsis">USER: {email}</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -208,6 +238,7 @@ function Dashboard({ user, clientData, leads, appointments, tasks }: {
   const [appTypeFilter, setAppTypeFilter] = useState<AppointmentType | null>(null);
   const [isAddMode, setIsAddMode] = useState(false);
   const [selectedLeadForUpdate, setSelectedLeadForUpdate] = useState<Lead | null>(null);
+  const [initialUpdateType, setInitialUpdateType] = useState<AppointmentType | null>(null);
   const [selectedLeadForDone, setSelectedLeadForDone] = useState<Lead | null>(null);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
@@ -334,14 +365,14 @@ function Dashboard({ user, clientData, leads, appointments, tasks }: {
         break;
       case 'Site Visits':
         const siteVisitLeadIds = new Set(
-          appointments
-            .filter(a => a.type === AppointmentType.SITE_VISIT)
+          (appointments || [])
+            .filter(a => a && a.type === AppointmentType.SITE_VISIT)
             .map(a => a.leadId)
         );
-        result = result.filter(l => l && (siteVisitLeadIds.has(l.id) || l.notes?.toLowerCase().includes('site visit')));
+        result = result.filter(l => l && (siteVisitLeadIds.has(l.id) || l.notes?.toLowerCase().includes('site visit') || l.callOutcome === CallOutcome.SITE_VISIT));
         result.sort((a, b) => {
-          const dateA = new Date(a.createdAt || 0).getTime();
-          const dateB = new Date(b.createdAt || 0).getTime();
+          const dateA = new Date(a.updatedAt || a.createdAt || 0).getTime();
+          const dateB = new Date(b.updatedAt || b.createdAt || 0).getTime();
           return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
         });
         break;
@@ -957,7 +988,10 @@ function Dashboard({ user, clientData, leads, appointments, tasks }: {
                       <LeadCard 
                         key={lead.id}
                         lead={lead} 
-                        onUpdateAfterCall={(l) => setSelectedLeadForUpdate(l)}
+                        onUpdateAfterCall={(l, type) => {
+                          setSelectedLeadForUpdate(l);
+                          setInitialUpdateType(type || null);
+                        }}
                         onMarkDone={(l) => setSelectedLeadForDone(l)}
                         onDelete={() => deleteLead(lead.id)}
                         onReassign={(l, agentId) => {
@@ -1002,10 +1036,14 @@ function Dashboard({ user, clientData, leads, appointments, tasks }: {
         <UpdateCallModal 
           isOpen={!!selectedLeadForUpdate} 
           lead={selectedLeadForUpdate} 
-          onClose={() => setSelectedLeadForUpdate(null)} 
+          onClose={() => {
+            setSelectedLeadForUpdate(null);
+            setInitialUpdateType(null);
+          }} 
           onUpdate={updateLeadFollowUp} 
           onSchedule={handleScheduleAppointment}
           teamMembers={clientData?.users || []}
+          initialType={initialUpdateType}
         />
         <MarkDoneModal isOpen={!!selectedLeadForDone} lead={selectedLeadForDone} onClose={() => setSelectedLeadForDone(null)} onConfirm={markLeadDone} />
         <ReassignModal 
