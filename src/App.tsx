@@ -125,8 +125,19 @@ function AccessDenied({ email }: { email: string }) {
         )}
         
         {(email.toLowerCase() === 'leadpilot25@gmail.com' || USERS.some(u => u.email.toLowerCase() === email.toLowerCase())) && (
-          <div className="space-y-3">
-             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Administrator Recovery</p>
+          <div className="space-y-4">
+             <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-left">
+               <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest mb-2">Authorized Accounts</p>
+               <div className="space-y-1">
+                 {USERS.map(u => (
+                   <div key={u.email} className="flex items-center gap-2 text-[10px] text-emerald-600 font-bold">
+                     <Users size={10} />
+                     <span>{u.email}</span>
+                   </div>
+                 ))}
+               </div>
+             </div>
+             
              <button 
               onClick={handleInitialize}
               disabled={initializing}
@@ -134,6 +145,7 @@ function AccessDenied({ email }: { email: string }) {
             >
               {initializing ? <Loader2 className="animate-spin" /> : 'Initialize My CRM Account'}
             </button>
+            <p className="text-[9px] text-gray-400 font-medium">Click above to set up the database for these users.</p>
           </div>
         )}
 
