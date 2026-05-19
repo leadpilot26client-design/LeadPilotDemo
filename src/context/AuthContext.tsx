@@ -41,27 +41,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError(null);
       
       if (firebaseUser?.email) {
+        const email = firebaseUser.email.toLowerCase();
         setUser(firebaseUser);
         try {
-          // Check if user is in any client's users list
+          // Check if user is in any client's users list (case-insensitive check by storing lowercased emails)
           const clientsRef = collection(db, 'clients');
-          const q = query(clientsRef, where('users', 'array-contains', firebaseUser.email));
-          let querySnapshot;
-          try {
-            querySnapshot = await getDocs(q);
-          } catch (e) {
-            handleFirestoreError(e, OperationType.LIST, 'clients');
-            throw e;
-          }
+          const q = query(clientsRef, where('users', 'array-contains', email));
+          let querySnapshot = await getDocs(q);
 
           if (!querySnapshot.empty) {
             const doc = querySnapshot.docs[0];
             setClientData(doc.data() as ClientData);
             setAuthorized(true);
           } else {
-            console.log("No client found for user:", firebaseUser.email);
-            setAuthorized(false);
-            setClientData(null);
+            // Also check by ownerEmail just in case
+            const qOwner = query(clientsRef, where('ownerEmail', '==', email), limit(1));
+            const ownerSnapshot = await getDocs(qOwner);
+            
+            if (!ownerSnapshot.empty) {
+              const doc = ownerSnapshot.docs[0];
+              setClientData(doc.data() as ClientData);
+              setAuthorized(true);
+            } else {
+              console.log("No client found for user:", email);
+              setAuthorized(false);
+              setClientData(null);
+            }
           }
         } catch (err: any) {
           console.error("Auth check error:", err);
