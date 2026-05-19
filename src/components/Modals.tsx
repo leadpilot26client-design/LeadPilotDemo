@@ -122,6 +122,87 @@ export function UpdateCallModal({ lead, isOpen, onClose, onUpdate, onSchedule, t
             />
           </div>
 
+          {/* Appointment Toggle */}
+          <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 flex items-center justify-between mb-4">
+            <div>
+              <p className="text-[10px] font-black uppercase text-emerald-800 tracking-widest">Schedule Next Step</p>
+              <p className="text-[9px] text-emerald-600 font-bold">Create a reminder for this lead</p>
+            </div>
+            <button 
+              type="button"
+              onClick={() => setCreateApp(!createApp)}
+              className={cn(
+                "w-12 h-6 rounded-full transition-all relative flex items-center px-1",
+                createApp ? "bg-emerald-500" : "bg-slate-200"
+              )}
+            >
+              <div className={cn(
+                "w-4 h-4 bg-white rounded-full transition-all shadow-sm",
+                createApp ? "translate-x-6" : "translate-x-0"
+              )} />
+            </button>
+          </div>
+
+          {createApp && (
+            <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+               <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Step Type</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[AppointmentType.FOLLOW_UP, AppointmentType.SITE_VISIT, AppointmentType.MEETING, AppointmentType.CALL].map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, appType: type })}
+                        className={cn(
+                          "py-3 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                          formData.appType === type 
+                            ? "bg-slate-900 border-slate-900 text-white shadow-lg" 
+                            : "bg-white border-slate-50 text-slate-500"
+                        )}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+               </div>
+               
+               <div className="grid grid-cols-2 gap-3">
+                 <div>
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Time</label>
+                   <input 
+                     type="time" 
+                     value={formData.appTime}
+                     onChange={(e) => setFormData({ ...formData, appTime: e.target.value })}
+                     className="w-full p-3 rounded-xl border-2 border-slate-50 bg-white font-bold text-xs"
+                   />
+                 </div>
+               </div>
+            </div>
+          )}
+
+          {/* Call Outcome */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Call Outcome</label>
+            <div className="flex flex-wrap gap-2">
+              {outcomes.map(outcome => (
+                <button
+                  key={outcome}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, callOutcome: outcome })}
+                  className={cn(
+                    "px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-all",
+                    formData.callOutcome === outcome 
+                      ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-100" 
+                      : "bg-slate-50 border-slate-50 text-slate-500 hover:border-slate-100"
+                  )}
+                >
+                  {outcome}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Lead Details */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Budget</label>
