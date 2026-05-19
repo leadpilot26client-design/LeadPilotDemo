@@ -75,16 +75,22 @@ function AccessDenied({ email }: { email: string }) {
     const clientId = 'client_lp_' + Math.random().toString(36).substr(2, 5);
     const path = `clients/${clientId}`;
     try {
+      // Get all emails from our local constants to authorized them in the DB
+      const authorizedEmails = Array.from(new Set([
+        email.toLowerCase(),
+        ...USERS.map(u => u.email.toLowerCase())
+      ]));
+
       await setDoc(doc(db, 'clients', clientId), {
         clientId,
-        maxUsers: 3,
-        users: [email],
+        maxUsers: 10,
+        users: authorizedEmails,
         ownerEmail: email,
         name: 'LeadPilot Master',
         defaultAgent: 'admin',
         createdAt: new Date().toISOString()
       });
-      console.log("Initialization successful for:", email);
+      console.log("Initialization successful for:", email, "with users:", authorizedEmails);
       window.location.reload();
     } catch (e: any) {
       console.error("Initialization error:", e);
@@ -118,7 +124,7 @@ function AccessDenied({ email }: { email: string }) {
           </div>
         )}
         
-        {email.toLowerCase() === 'leadpilot25@gmail.com' && (
+        {(email.toLowerCase() === 'leadpilot25@gmail.com' || USERS.some(u => u.email.toLowerCase() === email.toLowerCase())) && (
           <div className="space-y-3">
              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Administrator Recovery</p>
              <button 
