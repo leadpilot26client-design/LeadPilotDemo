@@ -15,7 +15,8 @@ import {
   ListTodo,
   AlertCircle,
   Zap,
-  Clock3
+  Clock3,
+  PhoneCall
 } from 'lucide-react';
 import { Lead, LeadStatus, DoneReason, Appointment, Task, TaskStatus, AppointmentType } from '../types';
 import { cn } from '../lib/utils';
@@ -60,7 +61,7 @@ export default function LeadCard({
 }: LeadCardProps) {
   const followUpDateStr = lead.followUpDate || new Date().toISOString();
   const followUpDate = parseISO(followUpDateStr);
-  const isDone = lead.status === LeadStatus.DONE;
+  const isDone = String(lead.status).toLowerCase() === 'done';
 
   const createdAtDate = lead.createdAt ? parseISO(lead.createdAt) : new Date();
   const daysInSystem = differenceInDays(new Date(), createdAtDate);
@@ -120,7 +121,7 @@ export default function LeadCard({
         else onActiveClick?.();
       }}
       className={cn(
-        "p-3.5 rounded-[1.8rem] border transition-all duration-300 relative group overflow-hidden cursor-pointer",
+        "p-3.5 rounded-[2rem] border transition-all duration-300 relative group overflow-hidden cursor-pointer",
         statusColor.bg,
         statusColor.border,
         "hover:shadow-md",
@@ -130,28 +131,28 @@ export default function LeadCard({
     >
       {/* Visual Status Indicator */}
       <div className={cn(
-        "absolute top-0 left-0 bottom-0 w-1 transition-colors shadow-sm",
+        "absolute top-0 left-0 bottom-0 w-1.5 transition-colors shadow-sm",
         statusColor.accent
       )} />
 
       {isSelectable && (
         <div className="absolute top-3 right-3 z-10">
           <div className={cn(
-            "w-4 h-4 rounded-full border-1.5 flex items-center justify-center transition-all duration-300 shadow-sm",
+            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-300 shadow-sm",
             isSelected ? "bg-emerald-500 border-emerald-500 text-white scale-110" : "bg-white border-slate-200"
           )}>
-            {isSelected && <CheckCircle size={10} strokeWidth={3} />}
+            {isSelected && <CheckCircle size={12} strokeWidth={3} />}
           </div>
         </div>
       )}
 
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex justify-between items-start mb-3 pl-1">
         <div className="flex gap-3 items-center min-w-0">
-          <div className="w-10 h-10 rounded-full bg-white border border-slate-100 flex items-center justify-center text-slate-800 font-black text-base shrink-0 uppercase shadow-sm">
+          <div className="w-11 h-11 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-slate-800 font-black text-lg shrink-0 uppercase shadow-sm">
             {(lead.firstName || lead.name || '?').charAt(0)}
           </div>
           <div className="min-w-0">
-            <h3 className="font-black text-slate-900 text-[16px] leading-tight mb-0.5 truncate">
+            <h3 className="font-black text-slate-900 text-[17px] leading-tight mb-0.5 truncate">
               {lead.firstName || lead.name} {lead.lastName || ''}
             </h3>
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -161,12 +162,11 @@ export default function LeadCard({
                   {urgency.label}
                 </div>
               )}
-              <span className="text-[9px] font-black uppercase text-emerald-600 tracking-wider">
+              <span className="text-[9px] font-black uppercase text-emerald-600 tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded-md">
                 {lead.propertyType || lead.property || 'General'}
               </span>
-              <span className="text-slate-300 text-[8px]">•</span>
               <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">
-                {daysInSystem === 0 ? 'Today' : `${daysInSystem}d ago`}
+                {daysInSystem === 0 ? 'Fresh' : `${daysInSystem}d`}
               </span>
             </div>
           </div>
@@ -176,22 +176,22 @@ export default function LeadCard({
           <div className="flex flex-col items-end gap-1 shrink-0">
             <div className="flex items-center gap-1.5">
               <div className={cn(
-                "text-right leading-none uppercase font-black tracking-tight",
+                "text-right leading-none uppercase font-black tracking-tight bg-white/70 px-2.5 py-1.5 rounded-xl border border-slate-100 shadow-sm",
                 isToday(followUpDate) ? "text-emerald-500" : 
                 isPast(followUpDate) ? "text-rose-500" : 
                 "text-blue-500"
               )}>
-                <p className="text-[8px] mb-0.5 opacity-60">
+                <p className="text-[7px] mb-0.5 opacity-60">
                   {isToday(followUpDate) ? 'Today' : isPast(followUpDate) ? 'Overdue' : 'Follow up'}
                 </p>
                 <p className="text-[10px] whitespace-nowrap">
-                  {format(followUpDate, 'MMM d, yy')}
+                  {format(followUpDate, 'MMM d')}
                 </p>
               </div>
               {onDelete && isAdmin && (
                 <button 
                   onClick={(e) => { e.stopPropagation(); onDelete(); }} 
-                  className="p-1 text-slate-300 hover:text-rose-500 transition-colors"
+                  className="w-8 h-8 rounded-xl bg-white border border-slate-100 text-slate-300 hover:text-rose-500 flex items-center justify-center transition-all active:scale-90"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -201,32 +201,40 @@ export default function LeadCard({
         )}
       </div>
 
-      <div className="flex gap-2 mb-3">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/70 rounded-full border border-slate-200/50 shadow-sm">
-          <Phone size={10} className="text-slate-400" />
-          <span className="text-[11px] font-bold text-slate-700 tracking-tight">{lead.phone}</span>
+      <div className="flex gap-2 mb-3 pl-1">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-white/70 rounded-xl border border-slate-200/50 shadow-sm transition-all group-hover:border-emerald-200">
+          <Phone size={10} className="text-emerald-500" />
+          <span className="text-[11px] font-black text-slate-700 tracking-tight">{lead.phone}</span>
         </div>
         {lead.budget && (
-          <div className="inline-flex items-center px-2.5 py-1 bg-white/50 rounded-full border border-slate-200/50 shadow-sm">
-            <span className="text-[11px] font-bold text-slate-700 tracking-tight">{lead.budget}</span>
+          <div className="inline-flex items-center px-2.5 py-1.5 bg-white/50 rounded-xl border border-slate-200/50 shadow-sm">
+            <span className="text-[11px] font-black text-slate-700 tracking-tight">{lead.budget}</span>
+          </div>
+        )}
+        {lead.callOutcome && (
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-900 rounded-xl text-white shadow-sm">
+             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+             <span className="text-[9px] font-black uppercase tracking-widest">{lead.callOutcome}</span>
           </div>
         )}
       </div>
 
       {nextAppointment && (
-        <div className="mb-3 p-2.5 bg-emerald-50/80 rounded-xl border border-emerald-100 shadow-sm">
+        <div className="mb-3 p-3 bg-emerald-50/80 rounded-2xl border border-emerald-100 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5 text-emerald-700">
-              {getAppointmentIcon(nextAppointment.type)}
+              <div className="w-5 h-5 rounded-lg bg-white flex items-center justify-center text-emerald-500 shadow-sm">
+                {getAppointmentIcon(nextAppointment.type)}
+              </div>
               <span className="text-[8px] font-black uppercase tracking-widest leading-none">{nextAppointment.type}</span>
             </div>
-            <div className="flex items-center gap-1 text-[8px] font-bold text-emerald-600 leading-none">
+            <div className="flex items-center gap-1 text-[8px] font-black text-emerald-600 leading-none bg-white px-2 py-1 rounded-lg">
               <Clock size={9} />
               {nextAppointment.date && isToday(parseISO(nextAppointment.date)) ? 'Today' : (nextAppointment.date ? format(parseISO(nextAppointment.date), 'MMM d') : 'No Date')} @ {nextAppointment.time}
             </div>
           </div>
           {nextAppointment.notes && (
-            <p className="text-[9px] text-emerald-600/80 line-clamp-1 italic italic-selection">
+            <p className="text-[10px] text-emerald-600/80 line-clamp-1 font-bold italic-selection ml-6.5">
               "{nextAppointment.notes}"
             </p>
           )}
@@ -234,12 +242,14 @@ export default function LeadCard({
       )}
 
       {pendingTasks.length > 0 && (
-        <div className="mb-3 p-2.5 bg-blue-50/80 rounded-xl border border-blue-100 flex items-center justify-between">
+        <div className="mb-3 p-3 bg-blue-50/80 rounded-2xl border border-blue-100 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-1.5 text-blue-700">
-            <ListTodo size={12} strokeWidth={2.5} />
+            <div className="w-5 h-5 rounded-lg bg-white flex items-center justify-center text-blue-500 shadow-sm">
+              <ListTodo size={12} strokeWidth={2.5} />
+            </div>
             <span className="text-[8px] font-black uppercase tracking-widest leading-none">{pendingTasks.length} Tasks</span>
           </div>
-          <p className="text-[9px] font-bold text-blue-600 truncate max-w-[120px] leading-none text-right">
+          <p className="text-[10px] font-black text-blue-600 truncate max-w-[120px] leading-none text-right uppercase tracking-tighter">
             {pendingTasks[0].title}
           </p>
         </div>
@@ -247,52 +257,54 @@ export default function LeadCard({
 
       {/* Action Buttons Row */}
       {!isDone && (
-        <div className="grid grid-cols-4 gap-1.5 mb-3">
+        <div className="grid grid-cols-4 gap-2 mb-3">
           <button 
             onClick={(e) => { e.stopPropagation(); handleWhatsApp(); }}
-            className="flex flex-col items-center gap-1 p-2 rounded-xl bg-emerald-50 border border-emerald-100/50 transition-all active:scale-95"
+            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-slate-100 transition-all active:scale-95 shadow-sm hover:border-emerald-200"
           >
-            <MessageCircle size={18} className="text-emerald-500" strokeWidth={1.5} />
-            <span className="text-[8px] font-bold text-emerald-600/70">WABA</span>
+            <MessageCircle size={20} className="text-emerald-500" strokeWidth={2} />
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">WhatsApp</span>
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); handleSms(); }}
-            className="flex flex-col items-center gap-1 p-2 rounded-xl bg-blue-50 border border-blue-100/50 transition-all active:scale-95"
+            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-slate-100 transition-all active:scale-95 shadow-sm hover:border-blue-200"
           >
-            <MessageSquare size={18} className="text-blue-500" strokeWidth={1.5} />
-            <span className="text-[8px] font-bold text-blue-600/70">SMS</span>
+            <MessageSquare size={20} className="text-blue-500" strokeWidth={2} />
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">SMS</span>
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); handleCall(); }}
-            className="flex flex-col items-center gap-1 p-2 rounded-xl bg-emerald-50/30 border border-emerald-100/30 transition-all active:scale-95"
+            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-slate-100 transition-all active:scale-95 shadow-sm hover:border-emerald-300"
           >
-            <Phone size={18} className="text-emerald-600" strokeWidth={1.5} />
-            <span className="text-[8px] font-bold text-emerald-600/70">Call</span>
+            <Phone size={20} className="text-emerald-600" strokeWidth={2} />
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Call</span>
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); handleEmail(); }}
-            className="flex flex-col items-center gap-1 p-2 rounded-xl bg-purple-50/50 border border-purple-100/50 transition-all active:scale-95"
+            className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-white border border-slate-100 transition-all active:scale-95 shadow-sm hover:border-purple-200"
           >
-            <Mail size={18} className="text-purple-500" strokeWidth={1.5} />
-            <span className="text-[8px] font-bold text-purple-600/70">Mail</span>
+            <Mail size={20} className="text-purple-500" strokeWidth={2} />
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Mail</span>
           </button>
         </div>
       )}
 
       {/* Main Action Buttons */}
       {!isDone && (
-        <div className="grid grid-cols-2 gap-2 mb-3">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           <button 
             onClick={(e) => { e.stopPropagation(); onUpdateAfterCall?.(lead); }}
-            className="py-2.5 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider active:scale-[0.98] transition-all hover:bg-emerald-600 shadow-md shadow-emerald-200/50"
+            className="group py-4 rounded-2xl bg-emerald-500 text-white text-[11px] font-black uppercase tracking-[0.2em] active:scale-[0.98] transition-all hover:bg-emerald-600 shadow-xl shadow-emerald-200 flex items-center justify-center gap-2"
           >
+            <PhoneCall size={14} className="group-hover:animate-bounce" />
             Update Call
           </button>
           <button 
             onClick={(e) => { e.stopPropagation(); onMarkDone(lead); }}
-            className="py-2.5 rounded-xl bg-slate-600 text-white text-[10px] font-black uppercase tracking-wider active:scale-[0.98] transition-all hover:bg-slate-700 shadow-md shadow-slate-200/50"
+            className="py-4 rounded-2xl bg-slate-900 text-white text-[11px] font-black uppercase tracking-[0.2em] active:scale-[0.98] transition-all hover:bg-slate-800 shadow-xl shadow-slate-200 flex items-center justify-center gap-2"
           >
-            Done
+            <CheckCircle size={14} />
+            Mark Done
           </button>
         </div>
       )}
