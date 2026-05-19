@@ -58,16 +58,5 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   throw new Error(stringified);
 }
 
-// Validation call to ensure connection
-async function testConnection() {
-  try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error) {
-    // Silently handle - rules might block it but it checks if server is reachable
-  }
-}
-
-testConnection();
-
 export const signInWithGoogle = () => signInWithPopup(auth, googleProvider);
 export const logout = () => signOut(auth);
