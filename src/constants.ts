@@ -3,7 +3,8 @@ import { User } from './types';
 // ✅ Authorized CRM Users (Add your agents and clients here)
 export const USERS: User[] = [
   { id: 'admin1', username: 'LeadPilot Admin', email: 'leadpilot25@gmail.com', role: 'admin' },
-  { id: 'client1', username: 'LeadPilot Admin1', email: 'leadpilot26.client@gmail.com', role: 'admin' }
+  { id: 'client1', username: 'LeadPilot Admin1', email: 'leadpilot26.client@gmail.com', role: 'admin' },
+  { id: 'client2', username: 'LeadPilot Master', email: 'leadpilotclient@gmail.com', role: 'admin' }
 ];
 
 // To add more users, simply add a new object to the USERS array above:
