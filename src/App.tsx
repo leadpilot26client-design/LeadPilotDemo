@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { parseISO, isToday, isPast, isFuture, startOfDay, format } from 'date-fns';
-import { LogOut, Plus, Search, Building2, Users, Bell, AlertCircle, Share2, UserPlus, CheckSquare, Square, ShieldAlert, Loader2, X, LayoutDashboard, Home } from 'lucide-react';
+import { LogOut, Plus, Search, Building2, Users, Bell, AlertCircle, Share2, UserPlus, CheckSquare, Square, ShieldAlert, Loader2, X, LayoutDashboard, Home, MapPin, Video, PhoneCall } from 'lucide-react';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { collection, query, where, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc, getDocs, orderBy, serverTimestamp, limit } from 'firebase/firestore';
 
@@ -329,6 +329,19 @@ function Dashboard({ user, clientData, leads, appointments, tasks }: {
         result.sort((a, b) => {
           const dateA = new Date(a.updatedAt || 0).getTime();
           const dateB = new Date(b.updatedAt || 0).getTime();
+          return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
+        });
+        break;
+      case 'Site Visits':
+        const siteVisitLeadIds = new Set(
+          appointments
+            .filter(a => a.type === AppointmentType.SITE_VISIT)
+            .map(a => a.leadId)
+        );
+        result = result.filter(l => l && (siteVisitLeadIds.has(l.id) || l.notes?.toLowerCase().includes('site visit')));
+        result.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
           return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
         });
         break;
