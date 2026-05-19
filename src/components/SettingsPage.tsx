@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { User, LogOut, Check, Save, UserCircle, Briefcase, Mail, UserPlus, Trash2, ShieldCheck, AlertCircle, PlusCircle, Share2, Bell } from 'lucide-react';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { User, LogOut, Check, Save, UserCircle, Briefcase, Mail, UserPlus, Trash2, ShieldCheck, AlertCircle, PlusCircle, Share2, Bell, RefreshCw, Loader2 } from 'lucide-react';
+import { doc, updateDoc, arrayUnion, arrayRemove, getDocs, collection, query, where, limit } from 'firebase/firestore';
 import { User as UserType } from '../types';
+import { USERS } from '../constants';
 import { db } from '../lib/firebase';
 import { cn } from '../lib/utils';
 
@@ -30,6 +31,32 @@ export default function SettingsPage({
   const [isSaved, setIsSaved] = useState(false);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+
+  const handleSyncTeam = async () => {
+    if (!clientData || !user.email) return;
+    setSyncing(true);
+    try {
+      const authorizedEmails = Array.from(new Set([
+        user.email.toLowerCase(),
+        ...USERS.map(u => u.email.toLowerCase())
+      ]));
+
+      const clientRef = doc(db, 'clients', clientData.clientId);
+      await updateDoc(clientRef, {
+        users: authorizedEmails,
+        updatedAt: new Date().toISOString()
+      });
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 2000);
+      alert('Team access synced successfully! All authorized agents can now log in.');
+    } catch (e) {
+      console.error(e);
+      alert('Failed to sync team. Please check your connection.');
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleSave = () => {
     onUpdateProfile({ username });
@@ -113,6 +140,38 @@ export default function SettingsPage({
           {isOwner ? 'Company Administrator' : 'Sales Representative'}
         </span>
       </div>
+
+      {clientData && isOwner && (
+        <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 px-1">
+              <RefreshCw size={16} className="text-emerald-600" />
+              <h3 className="text-xs font-bold text-emerald-800 uppercase tracking-widest">Authorized Team Sync</h3>
+            </div>
+            {isSaved && (
+             <div className="flex items-center gap-2 text-emerald-600 animate-in fade-in slide-in-from-top-2 duration-300">
+               <Check size={12} />
+               <span className="text-[10px] font-bold uppercase tracking-widest">Synced</span>
+             </div>
+           )}
+          </div>
+          <p className="text-[10px] text-emerald-600 font-medium px-1 leading-relaxed">
+            Push the authorized users defined in the app constants to the database to ensure all team members have access.
+          </p>
+          <button 
+            onClick={handleSyncTeam}
+            disabled={syncing}
+            className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+          >
+            {syncing ? <Loader2 className="animate-spin" size={18} /> : (
+              <>
+                <RefreshCw size={18} />
+                <span>Sync Authorized Team Access</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {clientData && isOwner && (
         <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 shadow-sm space-y-4">
