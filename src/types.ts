@@ -52,9 +52,11 @@ export interface Task {
 export enum CallOutcome {
   CONNECTED = 'Connected',
   BUSY = 'Busy',
-  NOT_ANSWERED = 'Not Answered',
-  WRONG_NUMBER = 'Wrong Number',
-  FOLLOW_UP_LATER = 'Follow up Later'
+  NOT_ANSWERED = 'No Answer',
+  FOLLOW_UP_LATER = 'Follow up',
+  SITE_VISIT = 'Site Visit',
+  MEETING = 'Meeting',
+  WRONG_NUMBER = 'Wrong #'
 }
 
 export interface Lead {
