@@ -11,9 +11,10 @@ interface UpdateCallModalProps {
   onUpdate: (leadId: string, updates: Partial<Lead>) => Promise<void>;
   onSchedule?: (data: any) => Promise<void>;
   teamMembers: string[];
+  initialType?: AppointmentType | null;
 }
 
-export function UpdateCallModal({ lead, isOpen, onClose, onUpdate, onSchedule, teamMembers }: UpdateCallModalProps) {
+export function UpdateCallModal({ lead, isOpen, onClose, onUpdate, onSchedule, teamMembers, initialType }: UpdateCallModalProps) {
   const [loading, setLoading] = useState(false);
   const [createApp, setCreateApp] = useState(false);
   const [formData, setFormData] = useState({
@@ -31,17 +32,22 @@ export function UpdateCallModal({ lead, isOpen, onClose, onUpdate, onSchedule, t
   React.useEffect(() => {
     if (lead && isOpen) {
       document.body.style.overflow = 'hidden';
+      
+      const defaultAppType = initialType || AppointmentType.FOLLOW_UP;
+      
       setFormData({
         followUpDate: lead.followUpDate ? format(new Date(lead.followUpDate), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
         notes: lead.notes || '',
         budget: lead.budget || '',
         location: lead.location || '',
         propertyType: lead.property || '',
-        appTime: '10:00',
-        appType: AppointmentType.FOLLOW_UP,
+        appTime: format(new Date(), 'HH:mm'),
+        appType: defaultAppType,
         callOutcome: (lead.callOutcome as string) || ''
       });
-      setCreateApp(false);
+      
+      // Auto-toggle schedule if we came from a specific link click
+      setCreateApp(!!initialType);
     } else {
       document.body.style.overflow = 'unset';
     }
@@ -184,21 +190,29 @@ export function UpdateCallModal({ lead, isOpen, onClose, onUpdate, onSchedule, t
           <div>
             <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">Call Outcome</label>
             <div className="flex flex-wrap gap-2">
-              {outcomes.map(outcome => (
-                <button
-                  key={outcome}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, callOutcome: outcome })}
-                  className={cn(
-                    "px-4 py-2 rounded-xl border-2 text-[10px] font-black uppercase tracking-widest transition-all",
-                    formData.callOutcome === outcome 
-                      ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-100" 
-                      : "bg-slate-50 border-slate-50 text-slate-500 hover:border-slate-100"
-                  )}
-                >
-                  {outcome}
-                </button>
-              ))}
+              {outcomes.map(outcome => {
+                const isSelected = formData.callOutcome === outcome;
+                const isPositive = [CallOutcome.CONNECTED, CallOutcome.SITE_VISIT, CallOutcome.MEETING].includes(outcome as CallOutcome);
+                const isNeutral = [CallOutcome.BUSY, CallOutcome.NOT_ANSWERED, CallOutcome.FOLLOW_UP_LATER].includes(outcome as CallOutcome);
+                
+                return (
+                  <button
+                    key={outcome}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, callOutcome: outcome })}
+                    className={cn(
+                      "px-3 py-2 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all",
+                      isSelected 
+                        ? (isPositive ? "bg-emerald-500 border-emerald-500 text-white shadow-md shadow-emerald-100" :
+                           isNeutral ? "bg-slate-900 border-slate-900 text-white shadow-md" :
+                           "bg-rose-500 border-rose-500 text-white shadow-md")
+                        : "bg-white border-slate-100 text-slate-500 hover:border-slate-200"
+                    )}
+                  >
+                    {outcome}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
