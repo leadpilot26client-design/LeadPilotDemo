@@ -44,29 +44,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const email = firebaseUser.email.toLowerCase();
         setUser(firebaseUser);
         try {
-          // Check if user is in any client's users list (case-insensitive check by storing lowercased emails)
+          // Check if user is in any client's users list - Faster parallel checks
           const clientsRef = collection(db, 'clients');
-          const q = query(clientsRef, where('users', 'array-contains', email));
-          let querySnapshot = await getDocs(q);
+          const [usersSnapshot, ownerSnapshot] = await Promise.all([
+            getDocs(query(clientsRef, where('users', 'array-contains', email), limit(1))),
+            getDocs(query(clientsRef, where('ownerEmail', '==', email), limit(1)))
+          ]);
 
-          if (!querySnapshot.empty) {
-            const doc = querySnapshot.docs[0];
+          if (!usersSnapshot.empty) {
+            const doc = usersSnapshot.docs[0];
+            setClientData(doc.data() as ClientData);
+            setAuthorized(true);
+          } else if (!ownerSnapshot.empty) {
+            const doc = ownerSnapshot.docs[0];
             setClientData(doc.data() as ClientData);
             setAuthorized(true);
           } else {
-            // Also check by ownerEmail just in case
-            const qOwner = query(clientsRef, where('ownerEmail', '==', email), limit(1));
-            const ownerSnapshot = await getDocs(qOwner);
-            
-            if (!ownerSnapshot.empty) {
-              const doc = ownerSnapshot.docs[0];
-              setClientData(doc.data() as ClientData);
-              setAuthorized(true);
-            } else {
-              console.log("No client found for user:", email);
-              setAuthorized(false);
-              setClientData(null);
-            }
+            console.log("No client found for user in DB:", email);
+            setAuthorized(false);
+            setClientData(null);
           }
         } catch (err: any) {
           console.error("Auth check error:", err);
